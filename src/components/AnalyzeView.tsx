@@ -123,7 +123,7 @@ export default function AnalyzeView({ onNavigate }: AnalyzeViewProps) {
   };
 
   return (
-    <div className="flex-grow overflow-y-auto p-8 max-w-5xl mx-auto w-full">
+    <div className="flex-grow overflow-y-auto p-4 sm:p-8 max-w-5xl mx-auto w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-slate-900 mb-2">Analyze Document</h1>
         <p className="text-slate-500 text-sm">
@@ -189,14 +189,14 @@ export default function AnalyzeView({ onNavigate }: AnalyzeViewProps) {
         )}
 
         <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
-          <div className="flex items-center gap-6 text-sm font-medium text-slate-500">
+          <div className="flex items-center justify-between sm:justify-start gap-6 text-sm font-medium text-slate-500 w-full sm:w-auto">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               {wordCount} words
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Est. ~{estTime} min analysis
+              ~{estTime} min
             </div>
           </div>
           <button 

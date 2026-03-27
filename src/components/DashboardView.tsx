@@ -49,7 +49,7 @@ export default function DashboardView({ onNavigate, onTabChange }: DashboardView
   };
 
   return (
-    <div className="flex-grow overflow-y-auto p-8 space-y-8">
+    <div className="flex-grow overflow-y-auto p-4 sm:p-8 space-y-8">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex justify-between items-start">
@@ -99,18 +99,18 @@ export default function DashboardView({ onNavigate, onTabChange }: DashboardView
 
       {/* Recent Analysis History */}
       <section>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h2 className="text-xl font-extrabold text-slate-900">Recent Analysis History</h2>
           <button 
             onClick={() => onTabChange && onTabChange('history')}
-            className="text-sm font-bold text-primary hover:underline flex items-center gap-1"
+            className="text-sm font-bold text-primary hover:underline flex items-center gap-1 self-start sm:self-auto"
           >
             View All History
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
           {historyLoading ? (
             <div className="p-12 flex items-center justify-center">
               <Loader2 className="w-6 h-6 text-primary animate-spin" />
