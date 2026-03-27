@@ -181,13 +181,13 @@ export default function AnalysisResultPage({ onNavigate, user }: AnalysisResultP
   return (
     <div className="min-h-screen bg-[#F8F9FB] font-sans text-slate-900 flex flex-col">
       {/* Header */}
-      <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+      <header className="min-h-[80px] py-4 md:py-0 bg-white border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between px-4 md:px-8 shrink-0 gap-4">
         <div className="flex items-center gap-3 cursor-pointer" onClick={handleBack}>
           <Logo />
           <h1 className="text-xl font-extrabold tracking-tight leading-none">CiviLens AI</h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4">
           <div className={`px-3 py-1.5 text-xs font-bold rounded-full uppercase tracking-wider ${riskBadge.color}`}>
             {riskBadge.label}
           </div>
@@ -197,7 +197,7 @@ export default function AnalysisResultPage({ onNavigate, user }: AnalysisResultP
           <button 
             onClick={handleExportPDF}
             disabled={isExporting}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#f27f0d] text-white rounded-full text-sm font-bold hover:bg-[#e07005] transition-colors shadow-sm disabled:opacity-75 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#f27f0d] text-white rounded-full text-sm font-bold hover:bg-[#e07005] transition-colors shadow-sm disabled:opacity-75 disabled:cursor-not-allowed w-full sm:w-auto justify-center mt-2 sm:mt-0"
           >
             {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {isExporting ? 'Exporting...' : 'Export Report'}
@@ -225,7 +225,7 @@ export default function AnalysisResultPage({ onNavigate, user }: AnalysisResultP
           {/* Title Section */}
           <div className="pdf-block-wrapper mb-14 text-center">
             <div className="pdf-block-content">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-[#111827] mb-5 tracking-tight px-4 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#111827] mb-5 tracking-tight px-4 leading-tight break-words">
               {documentTitle}
             </h1>
             <p className="text-lg text-slate-500 leading-relaxed max-w-2xl mx-auto">
@@ -239,12 +239,12 @@ export default function AnalysisResultPage({ onNavigate, user }: AnalysisResultP
             
             {/* Simple Explanation */}
             <div className="pdf-block-wrapper">
-              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm pdf-block-content">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm pdf-block-content">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-[#f27f0d]">
+                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-[#f27f0d] shrink-0">
                   <FileText className="w-5 h-5" />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900">Simple Explanation</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Simple Explanation</h2>
               </div>
               
               <div className="space-y-4 text-slate-600 leading-relaxed">
@@ -259,15 +259,15 @@ export default function AnalysisResultPage({ onNavigate, user }: AnalysisResultP
             <div className="pdf-block-wrapper">
               <div className="pdf-block-content">
                 <div className="flex items-center gap-4 mb-6 px-2">
-                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-[#f27f0d]">
+                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-[#f27f0d] shrink-0">
                     <List className="w-5 h-5" />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900">Key Points</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Key Points</h2>
                 </div>
 
                 <div className="space-y-4">
                   {keyPoints.map((point, idx) => (
-                    <div key={idx} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex gap-5 items-center">
+                    <div key={idx} className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center">
                       <div className="w-7 h-7 bg-orange-50 text-[#f27f0d] rounded-full flex items-center justify-center font-bold text-sm shrink-0">
                         {idx + 1}
                       </div>
@@ -282,20 +282,20 @@ export default function AnalysisResultPage({ onNavigate, user }: AnalysisResultP
             
             {/* Risk Warnings */}
             <div className="pdf-block-wrapper">
-              <div className={`rounded-3xl p-6 border ${hasRisks ? 'bg-red-50/50 border-red-100' : 'bg-emerald-50/50 border-emerald-100'} pdf-block-content`}>
-                <div className="flex items-center justify-between mb-6">
+              <div className={`rounded-3xl p-5 sm:p-6 border ${hasRisks ? 'bg-red-50/50 border-red-100' : 'bg-emerald-50/50 border-emerald-100'} pdf-block-content`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div className="flex items-center gap-3">
                     {hasRisks ? (
-                      <AlertTriangle className="w-6 h-6 text-red-600" />
+                      <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" />
                     ) : (
-                      <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                      <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
                     )}
-                    <h2 className={`text-xl font-bold ${hasRisks ? 'text-red-900' : 'text-emerald-900'}`}>
+                    <h2 className={`text-lg sm:text-xl font-bold ${hasRisks ? 'text-red-900' : 'text-emerald-900'}`}>
                       Risk Warnings
                     </h2>
                   </div>
                   {hasRisks && (
-                    <div className="px-3 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                    <div className="self-start sm:self-auto px-3 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full uppercase tracking-wider">
                       Action Required
                     </div>
                   )}
@@ -304,11 +304,11 @@ export default function AnalysisResultPage({ onNavigate, user }: AnalysisResultP
                 <div className="space-y-4">
                   {hasRisks ? (
                     riskWarnings.map((warning, idx) => (
-                      <div key={idx} className="bg-white rounded-2xl p-5 border border-red-100 shadow-sm flex items-center gap-4">
+                      <div key={idx} className="bg-white rounded-2xl p-5 border border-red-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4">
                         <div className="shrink-0 w-7 h-7 bg-red-100 rounded-full flex items-center justify-center">
                           <AlertCircle className="w-4 h-4 text-red-600" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 w-full">
                           <p className="text-sm text-red-900/90 leading-relaxed font-medium">
                             {formatText(warning)}
                           </p>
@@ -333,19 +333,19 @@ export default function AnalysisResultPage({ onNavigate, user }: AnalysisResultP
 
             {/* Practical Advice */}
             <div className="pdf-block-wrapper">
-              <div className="bg-emerald-50/50 rounded-3xl p-6 border border-emerald-100 pdf-block-content">
+              <div className="bg-emerald-50/50 rounded-3xl p-5 sm:p-6 border border-emerald-100 pdf-block-content">
                 <div className="flex items-center gap-3 mb-6">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                  <h2 className="text-xl font-bold text-emerald-900">Practical Advice</h2>
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                  <h2 className="text-lg sm:text-xl font-bold text-emerald-900">Practical Advice</h2>
                 </div>
 
                 <div className="space-y-4">
                   {practicalAdvice.map((advice, idx) => (
-                    <div key={idx} className="bg-white rounded-2xl p-5 border border-emerald-100/50 shadow-sm flex items-center gap-4">
+                    <div key={idx} className="bg-white rounded-2xl p-5 border border-emerald-100/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4">
                       <div className="shrink-0 w-7 h-7 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold text-sm">
                         {idx + 1}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 w-full">
                         <p className="text-sm text-emerald-900/90 leading-relaxed font-medium">
                           {formatText(advice)}
                         </p>

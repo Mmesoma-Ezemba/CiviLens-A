@@ -11,7 +11,9 @@ import {
   Search,
   ExternalLink,
   BookOpen,
-  Keyboard
+  Keyboard,
+  Menu,
+  X
 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { supabase } from '../supabaseClient';
@@ -32,6 +34,7 @@ export default function DashboardPage({ user, onNavigate }: DashboardPageProps) 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(2);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns when clicking outside
@@ -64,14 +67,24 @@ export default function DashboardPage({ user, onNavigate }: DashboardPageProps) 
 
   return (
     <div className="flex h-screen bg-[#F8F9FB] font-sans text-slate-900">
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
-        <div className="p-6 flex items-center gap-3 mb-6">
-          <Logo />
-          <div>
-            <h1 className="text-lg font-extrabold tracking-tight leading-none">CiviLens AI</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Admin Console</p>
+      <aside className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-200 ease-in-out w-64 bg-white border-r border-slate-200 flex flex-col shrink-0`}>
+        <div className="p-6 flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Logo />
+            <div>
+              <h1 className="text-lg font-extrabold tracking-tight leading-none">CiviLens AI</h1>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Admin Console</p>
+            </div>
           </div>
+          <button className="md:hidden text-slate-400 hover:text-slate-600" onClick={() => setIsMobileMenuOpen(false)}>
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <nav className="flex-grow px-4 space-y-1">
@@ -115,31 +128,36 @@ export default function DashboardPage({ user, onNavigate }: DashboardPageProps) 
       <main className="flex-grow flex flex-col overflow-hidden">
         {/* Header */}
         {activeTab !== 'settings' && (
-          <header className="h-20 bg-[#F8F9FB] flex items-center justify-between px-8 shrink-0">
-            {activeTab === 'history' ? (
-              <div className="flex items-center gap-3">
-                <History className="w-6 h-6 text-[#f27f0d]" />
-                <h1 className="text-2xl font-bold text-slate-900">History</h1>
-              </div>
-            ) : activeTab === 'analyze' ? (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-500">Documents</span>
-                <ChevronRight className="w-4 h-4 text-slate-300" />
-                <span className="font-bold text-slate-900">New Analysis</span>
-              </div>
-            ) : (
-              <h1 className="text-2xl font-bold text-slate-900 capitalize">{activeTab}</h1>
-            )}
+          <header className="h-20 bg-[#F8F9FB] flex items-center justify-between px-4 md:px-8 shrink-0">
+            <div className="flex items-center gap-3">
+              <button className="md:hidden text-slate-600 hover:text-slate-900" onClick={() => setIsMobileMenuOpen(true)}>
+                <Menu className="w-6 h-6" />
+              </button>
+              {activeTab === 'history' ? (
+                <div className="flex items-center gap-3">
+                  <History className="hidden sm:block w-6 h-6 text-[#f27f0d]" />
+                  <h1 className="text-xl md:text-2xl font-bold text-slate-900">History</h1>
+                </div>
+              ) : activeTab === 'analyze' ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="hidden sm:inline text-slate-500">Documents</span>
+                  <ChevronRight className="hidden sm:inline w-4 h-4 text-slate-300" />
+                  <span className="font-bold text-slate-900">New Analysis</span>
+                </div>
+              ) : (
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900 capitalize">{activeTab}</h1>
+              )}
+            </div>
 
             <div className="flex items-center gap-4">
               {activeTab === 'history' && (
-                <div className="relative w-80">
+                <div className="relative w-48 md:w-80 hidden sm:block">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input 
                     type="text" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search document name or risk level" 
+                    placeholder="Search documents..."
                     className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#f27f0d] transition-all shadow-sm"
                   />
                 </div>

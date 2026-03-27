@@ -121,14 +121,14 @@ export default function SettingsView() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto p-8 md:p-12 bg-[#F8F9FB] flex items-center justify-center">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#F8F9FB] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[#f27f0d] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-8 md:p-12 bg-[#F8F9FB]">
+    <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#F8F9FB]">
       <div className="max-w-4xl">
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Settings</h1>
@@ -141,7 +141,7 @@ export default function SettingsView() {
             <div className="p-6 border-b border-slate-100">
               <h2 className="text-xl font-bold text-slate-900">Profile Information</h2>
             </div>
-            <div className="p-8 flex flex-col sm:flex-row gap-8">
+            <div className="p-6 sm:p-8 flex flex-col sm:flex-row gap-6 sm:gap-8 items-center sm:items-start">
               <div className="relative w-32 h-32 shrink-0">
                 <img 
                   src={avatarUrl || "https://picsum.photos/seed/avatar3/200/200"} 
@@ -189,11 +189,11 @@ export default function SettingsView() {
                     />
                   </div>
                 </div>
-                <div className="pt-2 flex items-center gap-4">
+                <div className="pt-2 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                   <button 
                     onClick={handleSaveProfile}
                     disabled={isSaving}
-                    className="px-6 py-3 bg-[#f27f0d] text-white rounded-xl font-bold shadow-sm hover:bg-[#e07005] transition-colors disabled:opacity-50 flex items-center gap-2"
+                    className="w-full sm:w-auto justify-center px-6 py-3 bg-[#f27f0d] text-white rounded-xl font-bold shadow-sm hover:bg-[#e07005] transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     {isSaving ? 'Saving...' : 'Save Changes'}
