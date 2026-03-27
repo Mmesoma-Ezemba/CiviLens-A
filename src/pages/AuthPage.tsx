@@ -1,15 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { Logo } from '../components/Logo';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signInWithPopup, 
-  GoogleAuthProvider,
-  OAuthProvider
-} from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, handleFirestoreError, OperationType } from '../firebase';
+import { supabase } from '../supabaseClient';
 
 interface AuthPageProps {
   mode: 'login' | 'signup';
@@ -33,36 +25,7 @@ export default function AuthPage({ mode, onNavigate }: AuthPageProps) {
   };
 
   const handleAuthError = (error: any) => {
-    console.error('Auth error:', error);
-    switch (error.code) {
-      case 'auth/email-already-in-use':
-        setError('This email is already registered. Please log in instead or use a different email.');
-        break;
-      case 'auth/invalid-email':
-        setError('Please enter a valid email address (e.g., name@example.com).');
-        break;
-      case 'auth/user-not-found':
-        setError('No account found with this email. Please check your spelling or sign up.');
-        break;
-      case 'auth/wrong-password':
-        setError('Incorrect password. Please try again or click "Forgot password?" to reset it.');
-        break;
-      case 'auth/invalid-credential':
-      case 'auth/invalid-login-credentials':
-        setError('Invalid email or password. Please check your credentials and try again.');
-        break;
-      case 'auth/weak-password':
-        setError('Password is too weak. It must be at least 6 characters long and include a mix of letters and numbers.');
-        break;
-      case 'auth/too-many-requests':
-        setError('Too many failed login attempts. Please try again later or reset your password.');
-        break;
-      case 'auth/network-request-failed':
-        setError('Network error. Please check your internet connection and try again.');
-        break;
-      default:
-        setError(error.message ? error.message.replace('Firebase: ', '') : 'An unexpected error occurred. Please try again.');
-    }
+    setError(error.message || 'An unexpected error occurred. Please try again.');
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -72,55 +35,21 @@ export default function AuthPage({ mode, onNavigate }: AuthPageProps) {
 
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        if (error) throw error;
       } else {
         if (!fullName.trim()) {
-          throw { code: 'custom/missing-name', message: 'Full name is required' };
+          throw new Error('Full name is required');
         }
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // Save user profile to Firestore
-        try {
-          await setDoc(doc(db, 'users', user.uid), {
-            uid: user.uid,
-            email: user.email,
-            displayName: fullName,
-            createdAt: serverTimestamp(),
-          });
-        } catch (fsError) {
-          handleFirestoreError(fsError, OperationType.WRITE, `users/${user.uid}`);
-        }
-      }
-    } catch (err: any) {
-      if (err.code === 'custom/missing-name') {
-        setError(err.message);
-      } else {
-        handleAuthError(err);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError(null);
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      
-      // Check if user exists in Firestore, if not create it
-      try {
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName || 'Google User',
-          createdAt: serverTimestamp(),
-        }, { merge: true });
-      } catch (fsError) {
-        handleFirestoreError(fsError, OperationType.WRITE, `users/${user.uid}`);
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } }
+        });
+        if (error) throw error;
       }
     } catch (err: any) {
       handleAuthError(err);
@@ -129,25 +58,11 @@ export default function AuthPage({ mode, onNavigate }: AuthPageProps) {
     }
   };
 
-  const handleMicrosoftLogin = async () => {
+  const handleOAuthLogin = async (provider: 'google' | 'azure') => {
     setLoading(true);
     setError(null);
-    const provider = new OAuthProvider('microsoft.com');
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      try {
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName || 'Microsoft User',
-          createdAt: serverTimestamp(),
-        }, { merge: true });
-      } catch (fsError) {
-        handleFirestoreError(fsError, OperationType.WRITE, `users/${user.uid}`);
-      }
-    } catch (err: any) {
-      handleAuthError(err);
+      setError('OAuth logins are temporarily disabled pending Supabase external dashboard configuration.');
     } finally {
       setLoading(false);
     }
@@ -194,7 +109,7 @@ export default function AuthPage({ mode, onNavigate }: AuthPageProps) {
           {/* Social Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <button 
-              onClick={handleGoogleLogin}
+              onClick={() => handleOAuthLogin('google')}
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
@@ -202,7 +117,7 @@ export default function AuthPage({ mode, onNavigate }: AuthPageProps) {
               <span className="text-sm font-semibold text-slate-700">Google</span>
             </button>
             <button 
-              onClick={handleMicrosoftLogin}
+              onClick={() => handleOAuthLogin('azure')}
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors disabled:opacity-50"
             >

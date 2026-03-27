@@ -1,6 +1,132 @@
-import { Camera, Shield } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Camera, Shield, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 export default function SettingsView() {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
+  
+  const [analysisReports, setAnalysisReports] = useState(() => {
+    return localStorage.getItem('notify_analysisReports') === 'true';
+  });
+  const [productUpdates, setProductUpdates] = useState(() => {
+    return localStorage.getItem('notify_productUpdates') !== 'false'; // Default true
+  });
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setFullName(user.user_metadata?.full_name || user.email?.split('@')[0] || '');
+        setEmail(user.email || '');
+        setAvatarUrl(user.user_metadata?.avatar_url || '');
+      }
+      setIsLoading(false);
+    });
+  }, []);
+
+  const handleToggleReports = () => {
+    const newVal = !analysisReports;
+    setAnalysisReports(newVal);
+    localStorage.setItem('notify_analysisReports', String(newVal));
+  };
+  
+  const handleToggleUpdates = () => {
+    const newVal = !productUpdates;
+    setProductUpdates(newVal);
+    localStorage.setItem('notify_productUpdates', String(newVal));
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!event.target.files || event.target.files.length === 0) return;
+      const file = event.target.files[0];
+      
+      // Basic validation
+      if (!file.type.startsWith('image/')) {
+        setSaveMessage({ type: 'error', text: 'Please upload an image file.' });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setSaveMessage({ type: 'error', text: 'Image must be less than 5MB.' });
+        return;
+      }
+
+      setIsUploadingAvatar(true);
+      setSaveMessage({ type: '', text: '' });
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) throw new Error('You must be logged in to upload an avatar.');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // Upload to Supabase Storage avatars bucket
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update user metadata via Auth
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl }
+      });
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      setSaveMessage({ type: 'success', text: 'Profile photo updated!' });
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 4000);
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      setSaveMessage({ type: 'error', text: error.message || 'Failed to upload image.' });
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    setSaveMessage({ type: '', text: '' });
+    
+    try {
+      const updates: any = { data: { full_name: fullName } };
+      if (email) updates.email = email;
+      
+      const { error } = await supabase.auth.updateUser(updates);
+      if (error) throw error;
+      
+      setSaveMessage({ type: 'success', text: 'Settings saved successfully.' });
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 4000);
+    } catch (err: any) {
+      setSaveMessage({ type: 'error', text: err.message || 'Failed to update.' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto p-8 md:p-12 bg-[#F8F9FB] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#f27f0d] animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-8 md:p-12 bg-[#F8F9FB]">
       <div className="max-w-4xl">
@@ -18,13 +144,25 @@ export default function SettingsView() {
             <div className="p-8 flex flex-col sm:flex-row gap-8">
               <div className="relative w-32 h-32 shrink-0">
                 <img 
-                  src="https://picsum.photos/seed/avatar3/200/200" 
+                  src={avatarUrl || "https://picsum.photos/seed/avatar3/200/200"} 
                   alt="Profile" 
-                  className="w-full h-full rounded-3xl object-cover"
+                  className={`w-full h-full rounded-3xl object-cover transition-opacity ${isUploadingAvatar ? 'opacity-50 grayscale' : ''}`}
                   referrerPolicy="no-referrer"
                 />
-                <button className="absolute -bottom-3 -right-3 w-10 h-10 bg-[#f27f0d] text-white rounded-full flex items-center justify-center border-4 border-white shadow-sm hover:bg-[#e07005] transition-colors">
-                  <Camera className="w-4 h-4" />
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  ref={fileInputRef}
+                  className="hidden" 
+                />
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
+                  className="absolute -bottom-3 -right-3 w-10 h-10 bg-[#f27f0d] text-white rounded-full flex items-center justify-center border-4 border-white shadow-sm hover:bg-[#e07005] transition-colors disabled:opacity-50"
+                  title="Change profile photo"
+                >
+                  {isUploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 </button>
               </div>
               
@@ -34,7 +172,9 @@ export default function SettingsView() {
                     <label className="text-sm font-medium text-slate-900">Full Name</label>
                     <input 
                       type="text" 
-                      defaultValue="Alex Johnson"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter your name"
                       className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#f27f0d] transition-all text-slate-700"
                     />
                   </div>
@@ -42,66 +182,29 @@ export default function SettingsView() {
                     <label className="text-sm font-medium text-slate-900">Email Address</label>
                     <input 
                       type="email" 
-                      defaultValue="alex.johnson@civilens.ai"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
                       className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#f27f0d] transition-all text-slate-700"
                     />
                   </div>
                 </div>
-                <div className="pt-2">
-                  <button className="px-6 py-3 bg-[#f27f0d] text-white rounded-xl font-bold shadow-sm hover:bg-[#e07005] transition-colors">
-                    Save Changes
+                <div className="pt-2 flex items-center gap-4">
+                  <button 
+                    onClick={handleSaveProfile}
+                    disabled={isSaving}
+                    className="px-6 py-3 bg-[#f27f0d] text-white rounded-xl font-bold shadow-sm hover:bg-[#e07005] transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </button>
+                  {saveMessage.text && (
+                    <span className={`text-sm font-bold flex items-center gap-1.5 ${saveMessage.type === 'error' ? 'text-red-500' : 'text-emerald-500'}`}>
+                      {saveMessage.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                      {saveMessage.text}
+                    </span>
+                  )}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Account Security */}
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100">
-              <h2 className="text-xl font-bold text-slate-900">Account Security</h2>
-            </div>
-            <div className="p-8 space-y-8">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-900">Current Password</label>
-                  <input 
-                    type="password" 
-                    defaultValue="........"
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#f27f0d] transition-all text-slate-700 tracking-widest"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-900">New Password</label>
-                  <input 
-                    type="password" 
-                    defaultValue="........"
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#f27f0d] transition-all text-slate-700 tracking-widest"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-900">Confirm Password</label>
-                  <input 
-                    type="password" 
-                    defaultValue="........"
-                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#f27f0d] transition-all text-slate-700 tracking-widest"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-[#FFF9F2] rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
-                    <Shield className="w-5 h-5 text-[#f27f0d]" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Two-Factor Authentication</h3>
-                    <p className="text-sm text-slate-500 mt-0.5">Add an extra layer of security to your account.</p>
-                  </div>
-                </div>
-                <button className="text-[#f27f0d] font-bold text-sm hover:text-[#e07005] transition-colors whitespace-nowrap">
-                  Enable
-                </button>
               </div>
             </div>
           </div>
@@ -117,8 +220,11 @@ export default function SettingsView() {
                   <h3 className="text-sm font-bold text-slate-900">Analysis Reports</h3>
                   <p className="text-sm text-slate-500 mt-0.5">Get email alerts when your data analysis is complete.</p>
                 </div>
-                <button className="w-12 h-6 rounded-full bg-[#f27f0d] relative transition-colors focus:outline-none shrink-0">
-                  <span className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full transition-transform"></span>
+                <button 
+                  onClick={handleToggleReports}
+                  className={`w-12 h-6 rounded-full relative transition-colors focus:outline-none shrink-0 ${analysisReports ? 'bg-[#f27f0d]' : 'bg-slate-200'}`}
+                >
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${analysisReports ? 'right-1' : 'left-1'}`}></span>
                 </button>
               </div>
               
@@ -129,8 +235,11 @@ export default function SettingsView() {
                   <h3 className="text-sm font-bold text-slate-900">Product Updates</h3>
                   <p className="text-sm text-slate-500 mt-0.5">Stay informed about new features and improvements.</p>
                 </div>
-                <button className="w-12 h-6 rounded-full bg-slate-200 relative transition-colors focus:outline-none shrink-0">
-                  <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform"></span>
+                <button 
+                  onClick={handleToggleUpdates}
+                  className={`w-12 h-6 rounded-full relative transition-colors focus:outline-none shrink-0 ${productUpdates ? 'bg-[#f27f0d]' : 'bg-slate-200'}`}
+                >
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${productUpdates ? 'right-1' : 'left-1'}`}></span>
                 </button>
               </div>
             </div>

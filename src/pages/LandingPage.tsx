@@ -17,9 +17,8 @@ import {
   User as UserIcon
 } from 'lucide-react';
 import { Logo } from '../components/Logo';
-import { User } from 'firebase/auth';
-import { auth } from '../firebase';
-import { signOut } from 'firebase/auth';
+import { supabase } from '../supabaseClient';
+import { User } from '@supabase/supabase-js';
 
 interface LandingPageProps {
   onNavigate: (view: 'landing' | 'login' | 'signup') => void;
@@ -29,7 +28,7 @@ interface LandingPageProps {
 export default function LandingPage({ onNavigate, user }: LandingPageProps) {
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
     }
