@@ -58,15 +58,6 @@ export default function AuthPage({ mode, onNavigate }: AuthPageProps) {
     }
   };
 
-  const handleOAuthLogin = async (provider: 'google' | 'azure') => {
-    setLoading(true);
-    setError(null);
-    try {
-      setError('OAuth logins are temporarily disabled pending Supabase external dashboard configuration.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#faf9f6] relative overflow-hidden flex flex-col font-display">
@@ -106,33 +97,6 @@ export default function AuthPage({ mode, onNavigate }: AuthPageProps) {
             </p>
           </div>
 
-          {/* Social Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <button 
-              onClick={() => handleOAuthLogin('google')}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors disabled:opacity-50"
-            >
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-              <span className="text-sm font-semibold text-slate-700">Google</span>
-            </button>
-            <button 
-              onClick={() => handleOAuthLogin('azure')}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors disabled:opacity-50"
-            >
-              <img src="https://www.svgrepo.com/show/475661/microsoft-color.svg" alt="Microsoft" className="w-5 h-5" />
-              <span className="text-sm font-semibold text-slate-700">Microsoft</span>
-            </button>
-          </div>
-
-          <div className="relative flex items-center py-2 mb-8">
-            <div className="flex-grow border-t border-slate-200"></div>
-            <span className="flex-shrink-0 mx-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Or continue with email
-            </span>
-            <div className="flex-grow border-t border-slate-200"></div>
-          </div>
 
           {/* Error Message */}
           {error && (
